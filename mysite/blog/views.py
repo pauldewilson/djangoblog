@@ -2,20 +2,24 @@ from django.shortcuts import render, get_object_or_404, HttpResponseRedirect
 from django.contrib.auth.models import User
 from django.views.generic import ListView
 from django.urls import reverse
-from .models import Post
-from .forms import NewPostForm
+from .models import Post, Comment
+from .forms import NewPostForm, CommentForm
 
 # Create your views here.
+
+
 class PostListView(ListView):
     queryset = Post.published.all()
     context_object_name = 'posts'
     paginate_by = 3
-    template_name= 'blog/post/list.html'
+    template_name = 'blog/post/list.html'
+
 
 def post_detail(request, year, month, day, post):
     """
     View that shows individual post
     """
+    # fetch posts
     post = get_object_or_404(
         Post,
         slug=post,
@@ -24,7 +28,32 @@ def post_detail(request, year, month, day, post):
         publish__month=month,
         publish__day=day,
     )
-    return render(request, 'blog/post/detail.html', {'post': post})
+    # fetch comments
+    comments = post.comments.filter(active=True)
+    # initiate new_comment variable for use when creating a new comment
+    new_comment = None
+    # posting new comment logic
+    if request.method == 'POST':
+        # ascertain form is valid
+        comment_form = CommentForm(data=request.POST)
+        if comment_form.is_valid():
+            # create comment and assign post foreign key then save
+            new_comment = comment_form.save(commit=False)
+            new_comment.post = post
+            new_comment.save()
+            # clear form for refresh
+            comment_form = CommentForm()
+    else:
+        # GET request (page load)
+        # instantiate blank comment form
+        comment_form = CommentForm()
+    return render(request, 'blog/post/detail.html', {
+        'post': post,
+        'comments': comments,
+        'new_comment': new_comment,
+        'comment_form': comment_form,
+    })
+
 
 def new_post(request):
     """
