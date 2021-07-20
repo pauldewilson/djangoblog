@@ -2,6 +2,7 @@ from django.shortcuts import render, get_object_or_404, HttpResponseRedirect
 from django.contrib.auth.models import User
 from django.views.generic import ListView
 from django.urls import reverse
+from taggit.models import Tag
 from .models import Post, Comment
 from .forms import NewPostForm, CommentForm
 
@@ -83,3 +84,12 @@ def new_post(request):
     else:
         form = NewPostForm()
     return render(request, 'blog/post/newpost.html', {'form': form})
+
+def post_list(request, tag_slug=None):
+    # all published objects
+    object_list = Post.published.all()
+    # instantiate tag variable
+    tag = None
+    if tag_slug:
+        tag = get_object_or_404(Tag, slug=tag_slug)
+        object_list = object_list.filter(tags__in=[tag])

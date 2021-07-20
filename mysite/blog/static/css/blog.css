@@ -90,3 +90,6 @@ input[type=submit] {
     font-size:12px;
     color:#666;
 }
+.tags {
+    font-weight:bold;
+}
