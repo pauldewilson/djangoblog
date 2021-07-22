@@ -1,4 +1,5 @@
 from django.shortcuts import render, get_object_or_404, HttpResponseRedirect
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib.auth.models import User
 from django.views.generic import ListView
 from django.urls import reverse
@@ -85,11 +86,24 @@ def new_post(request):
         form = NewPostForm()
     return render(request, 'blog/post/newpost.html', {'form': form})
 
+
 def post_list(request, tag_slug=None):
     # all published objects
     object_list = Post.published.all()
     # instantiate tag variable
     tag = None
+    # if tag slug provided in url then filter for it
     if tag_slug:
         tag = get_object_or_404(Tag, slug=tag_slug)
         object_list = object_list.filter(tags__in=[tag])
+    # create pagination
+    paginator = Paginator(object_list, 3)
+    page = request.GET.get('page')
+    try:
+        posts = paginator.page(page)
+    except PageNotAnInteger:
+        # if page is not int then return first page
+        posts = paginator.page(1)
+    except EmptyPage:
+        posts = paginator.page(paginator.num_pages)
+    return render(request, 'blog/post/list.html', {'posts': posts, 'page': page, 'tag': tag})
