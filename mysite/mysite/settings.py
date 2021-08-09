@@ -36,6 +36,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # 'django.contrib.sites', # commented out otherwise sitemap does not work
+    # though this means that domain management is not available in admin
+    'django.contrib.sitemaps',
     'blog.apps.BlogConfig',
     'taggit',
 ]
