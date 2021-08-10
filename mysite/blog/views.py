@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404, HttpResponseRedirect
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.contrib.postgres.search import SearchVector
+from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
 from django.contrib.auth.models import User
 from django.views.generic import ListView
 from django.db.models import Count
@@ -116,16 +116,22 @@ def post_list(request, tag_slug=None):
     return render(request, 'blog/post/list.html', {'posts': posts, 'page': page, 'tag': tag})
 
 def post_search(request):
+    # instantiate form
     form = SearchForm()
     query = None
     results = []
     if 'query' in request.GET:
+        # if get then take params from URL and validate form
         form = SearchForm(request.GET)
         if form.is_valid():
             query = form.cleaned_data['query']
+            # create search vector that returns weighted results across title and body
+            search_vector = SearchVector('title', 'body') + SearchVector('body', weight='B')
+            search_query = SearchQuery(query)
             results = Post.published.annotate(
-                search=SearchVector('title', 'body'),
-            ).filter(search=query)
+              search=search_vector,
+              rank=SearchRank(search_vector, search_query)
+          ).filter(rank__gte=0.3).order_by('-rank')
     return render(request,
                   'blog/post/search.html',
                   {'form': form,
