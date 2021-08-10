@@ -1,5 +1,4 @@
 from django import forms
-from django.utils import timezone
 from .models import Comment
 
 class NewPostForm(forms.Form):
@@ -16,4 +15,6 @@ class CommentForm(forms.ModelForm):
     class Meta:
         model = Comment
         fields = ('name', 'email', 'body')
-        
+
+class SearchForm(forms.Form):
+    query = forms.CharField()
